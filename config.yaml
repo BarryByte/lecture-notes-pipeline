@@ -1,0 +1,45 @@
+# Lecture Notes Pipeline - Configuration
+# Optimized for CPU-only systems with 16GB RAM
+
+whisper:
+  # Model size: tiny, base, small, medium, large-v3
+  # Recommendation: 'medium' for best speed/accuracy balance
+  model: medium
+  
+  # Language: null for auto-detect, or ISO code like 'en', 'es', 'de'
+  language: null
+  
+  # Compute type: int8 (CPU optimized), float32 (more accurate but slower)
+  compute_type: int8
+  
+  # Beam size: higher = more accurate but slower (1-10)
+  beam_size: 5
+
+llm:
+  # Ollama model name
+  # Options: llama3.2:3b, phi3:mini, mistral:7b
+  model: llama3.2:3b
+  
+  # Temperature: 0.0-1.0, lower = more focused/deterministic
+  temperature: 0.3
+  
+  # Max tokens for note generation per chunk
+  max_tokens: 4096
+
+processing:
+  # Chunk size for long transcripts (in tokens, approximate)
+  chunk_size: 8000
+  
+  # Cache transcripts to avoid re-processing
+  cache_enabled: true
+  cache_dir: .cache
+
+output:
+  # Output format: markdown (more formats coming)
+  format: markdown
+  
+  # Include timestamps in notes
+  include_timestamps: true
+  
+  # Default output directory (relative to current working directory)
+  directory: ./output
