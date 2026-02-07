@@ -2,6 +2,64 @@
 
 A fully local, privacy-first pipeline that transforms lecture videos into structured study notes using AI. **No data leaves your device.**
 
+---
+
+## 🎬 See It In Action
+
+<!-- TODO: Add demo.gif here after recording -->
+<!-- ![Demo](assets/demo.gif) -->
+
+### Before → After
+
+| 📹 Input: Lecture Video | 📝 Output: Structured Notes |
+|:-----------------------:|:---------------------------:|
+| ![Lecture Video](assets/input_thumbnail.png) | ![Generated Notes](assets/output_preview_1.png) |
+
+> ⏱️ **A 2-hour lecture → ~44 min processing → Structured Markdown notes with timestamps, summaries, and action items! Working on reducing it more. Stay tuneddd...**
+
+📄 **[View Sample Output →](preview_outputs/Introduction%20to%20Data%20Engineering_notes.md)** | 📋 **[View Action Items →](preview_outputs/Introduction%20to%20Data%20Engineering_action_items.md)**
+
+---
+
+## 🏗️ Architecture
+
+```mermaid
+flowchart LR
+    subgraph Input
+        A[📹 Video File<br/>MP4/MKV/AVI/WebM]
+    end
+    
+    subgraph Processing
+        B[🎵 FFmpeg<br/>Audio Extraction]
+        C[🗣️ Whisper<br/>Speech-to-Text]
+        D[🤖 Ollama LLM<br/>Note Generation]
+    end
+    
+    subgraph Output
+        E[📝 Notes.md<br/>Summaries & Concepts]
+        F[✅ Action Items.md<br/>Homework & Deadlines]
+    end
+    
+    A --> B --> C --> D
+    D --> E
+    D --> F
+    
+    style A fill:#e3f2fd,stroke:#1976d2
+    style B fill:#fff3e0,stroke:#f57c00
+    style C fill:#e8f5e9,stroke:#388e3c
+    style D fill:#fce4ec,stroke:#c2185b
+    style E fill:#e1f5fe,stroke:#0288d1
+    style F fill:#e1f5fe,stroke:#0288d1
+```
+
+**Key Components:**
+- **FFmpeg** - Extracts audio from video files
+- **Whisper** - OpenAI's speech recognition (runs locally via faster-whisper)
+- **Ollama** - Local LLM runtime for note generation
+- **Caching** - Transcripts cached by video hash to avoid re-processing
+
+---
+
 ## ✨ Features
 
 - **100% Offline** - All processing happens locally
@@ -24,7 +82,7 @@ A fully local, privacy-first pipeline that transforms lecture videos into struct
 ### 1. Clone & Setup
 
 ```bash
-git clone https://github.com/yourusername/lecture-notes-pipeline.git
+git clone https://github.com/BarryByte/lecture-notes-pipeline.git
 cd lecture-notes-pipeline
 bash setup.sh
 ```
@@ -126,6 +184,8 @@ lecture-notes-pipeline/
 │   ├── transcriber.py      # Whisper integration
 │   ├── note_generator.py   # LLM note creation
 │   └── utils.py            # Helpers
+├── assets/                 # Screenshots & demo media
+├── preview_outputs/        # Sample outputs for showcase
 ├── .cache/                 # Cached transcripts (auto-created)
 ├── output/                 # Generated notes (auto-created)
 ├── main.py                 # CLI entry point
@@ -166,15 +226,5 @@ ollama serve
 - **No data transmitted** - all AI runs locally
 - **No telemetry** - zero tracking or analytics
 - Transcripts cached locally in `.cache/` (gitignored)
-
-## 📜 License
-
-MIT License - see [LICENSE](LICENSE)
-
-## 🤝 Contributing
-
-Contributions welcome! See [CONTRIBUTING.md](docs/CONTRIBUTING.md) for guidelines.
-
----
 
 Made with ☕ for students who hate taking notes
