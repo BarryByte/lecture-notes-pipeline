@@ -88,6 +88,11 @@ def load_config(config_path: str = "config.yaml") -> dict:
     help='Enable verbose output'
 )
 @click.option(
+    '--extract-actions/--no-extract-actions',
+    default=None,
+    help='Extract upcoming classes, homework, and deadlines (default: from config)'
+)
+@click.option(
     '--config', '-c',
     type=click.Path(),
     default='config.yaml',
@@ -102,6 +107,7 @@ def main(
     no_cache: bool,
     no_stream: bool,
     verbose: bool,
+    extract_actions: Optional[bool],
     config: str
 ):
     """
@@ -124,6 +130,10 @@ def main(
         cache_dir = cfg.get('processing', {}).get('cache_dir', '.cache')
         chunk_size = cfg.get('processing', {}).get('chunk_size', 8000)
         output_dir = output or cfg.get('output', {}).get('directory', '.')
+        extract_actions_enabled = extract_actions if extract_actions is not None else cfg.get('output', {}).get('extract_action_items', True)
+        
+        # Determine total steps
+        total_steps = 5 if extract_actions_enabled else 4
         
         # Print header
         print_header("🎓 Lecture Notes Pipeline")
@@ -131,7 +141,7 @@ def main(
         video_path = Path(video_path)
         
         # Step 1: Validate and get video info
-        print_step(1, 4, "Analyzing video file")
+        print_step(1, total_steps, "Analyzing video file")
         
         video_info = get_video_info(str(video_path))
         if not video_info:
@@ -164,7 +174,7 @@ def main(
         console.print()
         
         # Step 2: Extract audio
-        print_step(2, 4, "Extracting audio")
+        print_step(2, total_steps, "Extracting audio")
         
         temp_audio_path = extract_audio(
             str(video_path),
@@ -174,7 +184,7 @@ def main(
         console.print()
         
         # Step 3: Transcribe
-        print_step(3, 4, f"Transcribing with Whisper ({whisper_model})")
+        print_step(3, total_steps, f"Transcribing with Whisper ({whisper_model})")
         
         transcriber = Transcriber(
             model_size=whisper_model,
@@ -198,7 +208,7 @@ def main(
         console.print()
         
         # Step 4: Generate notes
-        print_step(4, 4, f"Generating notes with {llm_model}")
+        print_step(4, total_steps, f"Generating notes with {llm_model}")
         
         generator = NoteGenerator(
             model=llm_model,
@@ -223,6 +233,26 @@ def main(
             f.write(f"<!-- Language: {transcript.get('language', 'unknown')} -->\n\n")
             f.write(notes)
         
+        # Step 5: Extract action items (if enabled)
+        action_items_path = None
+        if extract_actions_enabled:
+            console.print()
+            print_step(5, 5, "Extracting action items")
+            
+            action_items = generator.extract_action_items(
+                transcript,
+                stream_output=not no_stream
+            )
+            
+            # Save action items
+            action_items_filename = f"{video_path.stem}_action_items.md"
+            action_items_path = output_dir / action_items_filename
+            
+            with open(action_items_path, 'w', encoding='utf-8') as f:
+                f.write(f"<!-- Extracted by Lecture Notes Pipeline -->\n")
+                f.write(f"<!-- Source: {video_path.name} -->\n\n")
+                f.write(action_items)
+        
         # Final summary
         total_time = time.time() - start_time
         
@@ -230,6 +260,8 @@ def main(
         print_header("✅ Complete!")
         
         console.print(f"  📝 Notes saved to: [bold green]{output_path}[/bold green]")
+        if action_items_path:
+            console.print(f"  📋 Action items saved to: [bold green]{action_items_path}[/bold green]")
         console.print(f"  ⏱️  Total time: {format_duration(total_time)}")
         console.print(f"  📊 Transcript: {len(transcript['segments'])} segments, {len(transcript['text'].split())} words")
         console.print()

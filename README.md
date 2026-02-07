@@ -49,7 +49,7 @@ source venv/bin/activate
 python main.py path/to/lecture.mp4
 ```
 
-Your notes will be saved as `lecture_notes.md` in the current directory.
+Your notes will be saved to `output/<video_name>_notes.md`.
 
 ## ⚙️ Configuration
 
@@ -59,10 +59,12 @@ Your notes will be saved as `lecture_notes.md` in the current directory.
 python main.py lecture.mp4 [OPTIONS]
 
 Options:
-  --output, -o PATH       Output directory (default: current dir)
+  --output, -o PATH       Output directory (default: ./output)
   --language, -l CODE     Language code, e.g., 'en', 'es' (default: auto)
   --whisper-model MODEL   Whisper model size (default: medium)
   --llm-model MODEL       Ollama model name (default: llama3.2:3b)
+  --no-cache              Disable transcript caching
+  --no-stream             Disable streaming output for notes
   --verbose, -v           Enable debug logging
   --help                  Show help message
 ```
@@ -107,11 +109,13 @@ output:
 
 | Lecture Length | Transcription | Notes | Total |
 |----------------|---------------|-------|-------|
-| 15 min | ~9 min | ~1 min | ~10 min |
-| 60 min | ~36 min | ~5 min | ~41 min |
-| 120 min | ~72 min | ~10 min | ~82 min |
+| 15 min | ~9 min | ~2 min | ~11 min |
+| 60 min | ~36 min | ~8 min | ~44 min |
+| 120 min | ~51 min | ~15 min | ~66 min |
 
-*Times measured with `medium` Whisper + `llama3.2:3b`*
+*Times measured with `medium` Whisper + `llama3.2:3b`. Long lectures (>1hr) are automatically chunked for better note quality.*
+
+> 💡 **Tip**: Transcripts are cached automatically. Re-running on the same video skips transcription entirely!
 
 ## 📁 Project Structure
 
@@ -122,6 +126,8 @@ lecture-notes-pipeline/
 │   ├── transcriber.py      # Whisper integration
 │   ├── note_generator.py   # LLM note creation
 │   └── utils.py            # Helpers
+├── .cache/                 # Cached transcripts (auto-created)
+├── output/                 # Generated notes (auto-created)
 ├── main.py                 # CLI entry point
 ├── config.yaml             # Settings
 ├── requirements.txt

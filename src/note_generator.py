@@ -73,6 +73,58 @@ Create a unified document with:
 Ensure smooth transitions and remove any redundancy."""
 
 
+ACTION_ITEMS_PROMPT = """Analyze this lecture transcript and extract ALL actionable items, upcoming class information, homework, and assignment deadlines.
+
+## What to Extract:
+
+1. **Next Class Information**
+   - Date, time, location
+   - Topic or subject matter
+   - Any room or schedule changes
+
+2. **Homework & Assignments**
+   - What needs to be completed before next class
+   - Specific exercises, problems, or tasks mentioned
+   - Reading assignments
+
+3. **Important Deadlines**
+   - Exam dates
+   - Project submissions
+   - Quiz announcements
+   - Any other time-sensitive items
+
+4. **Preparation Required**
+   - Materials to bring
+   - Concepts to review
+   - Pre-class preparation
+
+## Transcript:
+{transcript}
+
+---
+
+## Output Format:
+
+# 📋 Action Items & Upcoming Classes
+
+## 🗓️ Next Class
+[Date, time, topic, location if mentioned - or "Not mentioned" if not stated]
+
+## 📚 Homework Due
+[List as checkbox items: - [ ] Task description (due date if mentioned)]
+
+## ⚠️ Important Deadlines
+[List any exams, projects, submissions with dates]
+
+## 📖 Preparation Required
+[Any materials, readings, or concepts to review]
+
+---
+
+If specific information is not mentioned in the transcript, indicate "Not mentioned in this lecture" for that section.
+Generate the action items now:"""
+
+
 class NoteGenerator:
     """Generates structured notes from transcripts using Ollama."""
     
@@ -341,6 +393,55 @@ class NoteGenerator:
                 options={'temperature': self.temperature}
             )
             return response.get('response', '')
+
+    def extract_action_items(
+        self,
+        transcript: Dict[str, Any],
+        stream_output: bool = True
+    ) -> str:
+        """Extract action items, upcoming classes, homework, and deadlines from transcript.
+        
+        Args:
+            transcript: Transcript dict from the transcriber
+            stream_output: Whether to stream output to console
+            
+        Returns:
+            Extracted action items in Markdown format
+        """
+        # Check model availability
+        if not self.check_model_available():
+            raise RuntimeError(
+                f"Model '{self.model}' not found. "
+                f"Run: ollama pull {self.model}"
+            )
+        
+        console.print(f"[cyan]Extracting action items with {self.model}[/cyan]")
+        
+        start_time = time.time()
+        
+        # Use full transcript text for action items (no chunking needed)
+        formatted_transcript = self._format_transcript_for_prompt(transcript)
+        prompt = ACTION_ITEMS_PROMPT.format(transcript=formatted_transcript)
+        
+        if stream_output:
+            console.print("\n[bold]Extracted Action Items:[/bold]\n")
+            full_response = ""
+            for chunk in self._stream_generate(prompt):
+                console.print(chunk, end="")
+                full_response += chunk
+            console.print("\n")
+        else:
+            response = self.client.generate(
+                model=self.model,
+                prompt=prompt,
+                options={'temperature': self.temperature}
+            )
+            full_response = response.get('response', '')
+        
+        generation_time = time.time() - start_time
+        print_success(f"Action items extracted in {format_duration(generation_time)}")
+        
+        return full_response
 
 
 def generate_notes(

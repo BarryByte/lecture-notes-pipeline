@@ -41,5 +41,8 @@ output:
   # Include timestamps in notes
   include_timestamps: true
   
+  # Extract action items (upcoming classes, homework, deadlines)
+  extract_action_items: true
+  
   # Default output directory (relative to current working directory)
   directory: ./output
